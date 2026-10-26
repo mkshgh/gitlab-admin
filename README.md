@@ -1,5 +1,24 @@
 # gitlab-admin
 
+## Configuration
+Already have ssl
+```sh
+external_url 'https://git.test.local'
+letsencrypt['enable'] = false
+nginx['redirect_http_to_https'] = true
+nginx['ssl_certificate'] = "/etc/gitlab/ssl/git.test.local.crt"
+nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/git.test.local.key"
+```
+
+Use let's encrypt
+```sh
+# Domain should be pointed to the ip and port allowed
+letsencrypt['enable'] = true
+letsencrypt['contact_emails'] = ['user.name@email.com']
+external_url 'https://git.test.local'
+```
+
+
 ## Simple Tasks
 ```sql
 # Go to DB
@@ -63,4 +82,38 @@ gitlab-rake gitlab:check SANITIZE=true
 
 echo ""
 echo "[6/6] Restore completed successfully."
+```
+
+
+## All Repos
+```sh
+# needed deps
+sudo apt install jq curl
+
+# needed exports
+export GITLAB_URL="https://git.test.local"
+export TOKEN="glpat-XXXXXXXXXXXXXXXXXXXXXX"
+```
+
+```sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+page=1
+count=0
+: > repos.txt
+
+while :; do
+    r=$(curl -fsS --header "PRIVATE-TOKEN: $TOKEN" \
+        "$GITLAB_URL/api/v4/projects?membership=false&owned=true&per_page=100&page=$page")
+
+    n=$(jq 'length' <<< "$r")
+    (( n == 0 )) && break
+
+    jq -r '.[].path_with_namespace' <<< "$r" >> repos.txt
+    count=$((count + n))
+    ((page++))
+done
+
+echo "$count projects saved to repos.txt"
 ```
