@@ -20,6 +20,13 @@ external_url 'https://git.test.local'
 
 
 ## Simple Tasks
+
+### HOMEPAGE/URL Update
+```sql
+UPDATE application_settings SET home_page_url = 'https://git.test.local', after_sign_out_path = 'https://git.test.local';
+```
+
+### Users View/Block
 ```sql
 # Go to DB
 sudo gitlab-psql -d gitlabhq_production
@@ -35,6 +42,21 @@ WHERE username <> 'root';
 \d application_settings
 ```
 
+### CronJobs
+```sql
+# 1. Go to DB
+sudo gitlab-psql -d gitlabhq_production
+
+# 2. List registered CI/CD runners
+SELECT id, description, contacted_at, active FROM ci_runners ORDER BY id;
+
+# 3. Check recent runner job activity
+SELECT id, status, runner_id, created_at, finished_at FROM ci_builds ORDER BY id DESC LIMIT 50;
+
+# 4. Count runners by status
+SELECT active, COUNT(*) FROM ci_runners GROUP BY active;
+```
+### Create/Update Users
 ```ruby
 #existing user
 sudo gitlab-rails console
